@@ -10,6 +10,12 @@ def find_nearest(xout,xin,yin):
     idx = (numpy.abs(xin-xout)).argmin()
     return yin[idx]
 
+mode = 'plotting' # 'plotting' or 'statistics'
+if mode=='plotting':
+    n_realisations = 10
+elif mode=='statistics':
+    n_realisations = 5000
+
 filedir = 'filesForAntonFinal/'
 mat = numpy.loadtxt(filedir+'simderiv_del_CBB_del_Cphiphi_theo.dat')
 lmatA = numpy.loadtxt(filedir+'simderiv_del_CBB_del_Cphiphi_theo.dat_lvec')
@@ -87,11 +93,8 @@ intEr2 =lmatA.copy()
 b_intEr =lmatA.copy()
 b_intEr2 =lmatA.copy()
 
-# ANTON: plot in units of uK
-K_to_uk = 1e6
-
 #sys.exit()
-for i in xrange(5000):
+for i in xrange(n_realisations):
     # ANTON: right now, all measurements have the same error (from Planck)
     errReals = numpy.random.randn(len(errorRatio[0]))*errorRatio[1]
     errReals3 = numpy.random.randn(len(errorRatio[0]))*errorRatio[1]
@@ -103,29 +106,31 @@ for i in xrange(5000):
     intEr[lmatA>1500.] = 0.
     # ANTON: changed this line
     clBBADRand = numpy.dot(mat,(1.-numpy.interp(lmatA,rho[0],rhoAlt**2.) *(1.+(intEr*2.-b_intEr)))*phiBin/TCMB**2.)
-    #plt.plot(lmatA,K_to_uk**2 *(clBBADRand-clBBAD545),color='b', lw=1)
-    np.save('residuals_after_delensing_for_propagating_to_r_bias/cibonly_residual_spec_'+str(i)+'_in_uK', K_to_uk**2 *(clBBADRand-clBBAD545))
+    if mode == 'plotting':
+        plt.plot(lmatA,TCMB**2 *(clBBADRand-clBBAD545),color='b', lw=1)
+    elif mode == 'statistics':
+        np.save('residuals_after_delensing_for_propagating_to_r_bias/cibonly_residual_spec_'+str(i)+'_in_uK', TCMB**2 *(clBBADRand-clBBAD545))
 
 
-# ANTON: edit legend to clarify that we're varying both auto- and cross- spectra
-plt.plot(lmatA,K_to_uk**2 * (clBBADRand-clBBAD545),label=r'perturbing $C_l^{\kappa I}$ and $C_l^{II}$',color='b', lw=1)
-# ANTON: plot x=0 line
-plt.axhline(0, lw=0.5, color='gray')
+if mode == 'plotting':
+    # ANTON: edit legend to clarify that we're varying both auto- and cross- spectra
+    plt.plot(lmatA,TCMB**2 * (clBBADRand-clBBAD545),label=r'perturbing $C_l^{\kappa I}$ and $C_l^{II}$',color='b', lw=1)
+    # ANTON: plot x=0 line
+    plt.axhline(0, lw=0.5, color='gray')
 
-plt.plot(lr,K_to_uk**2 * clBBr*0.001,label=r'$C_l^{BB,\mathrm{primordial}}(r=0.001)$',linewidth=2,color='k')
-plt.legend(loc='best')
-print clBBA.shape
-print lmatA.shape
-plt.ylim(-1.5e-8,3.e-8)#plt.ylim((-1.5e-7,2e-7))
-plt.xlim(20,450)
-plt.ylabel(r'$C_l^{BB,\mathrm{res}}-C_l^{BB,\mathrm{res},\mathrm{fiducial}}$ [$\mu\mathrm{K}^2$]')
-plt.xlabel(r'$l$')
+    plt.plot(lr,TCMB**2 * clBBr*0.001,label=r'$C_l^{BB,\mathrm{primordial}}(r=0.001)$',linewidth=2,color='k')
+    plt.legend(loc='best')
 
-#plt.savefig('ANTONlensBcompareErrorFINALPostHack_CIBonly.pdf',bbox_inches='tight', dpi=600)
+    plt.ylim((-1.5e-7,2e-7))#plt.ylim(-1.5e-8,3.e-8)#
+    plt.xlim(20,450)
+    plt.ylabel(r'$C_l^{BB,\mathrm{res}}-C_l^{BB,\mathrm{res},\mathrm{fiducial}}$ [$\mu\mathrm{K}^2$]')
+    plt.xlabel(r'$l$')
 
-plt.clf()
-print lmat.shape, intEr.shape
-plt.plot(lmatA,intEr)
-plt.plot(rho[0],rho[1])
-plt.xlim(50,3000.)
-#plt.savefig('ANTONrhoAndErr.png')
+    plt.savefig('ANTONlensBcompareErrorFINALPostHack_CIBonly.pdf',bbox_inches='tight', dpi=600)
+
+    plt.clf()
+    print lmat.shape, intEr.shape
+    plt.plot(lmatA,intEr)
+    plt.plot(rho[0],rho[1])
+    plt.xlim(50,3000.)
+    plt.savefig('ANTONrhoAndErr.png')
